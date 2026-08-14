@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FASHIONHUB.MAX Store</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b0b0d;color:#fff;font-family:Arial,sans-serif}
+header{position:sticky;top:0;z-index:10;background:#111216;border-bottom:1px solid #2b2b31;padding:16px 18px}
+.logo{font-weight:800;letter-spacing:2px}main{max-width:1050px;margin:auto;padding:20px 16px}
+.hero{padding:45px 22px;border-radius:22px;background:linear-gradient(135deg,#282930,#111);margin-bottom:30px}
+h1{font-size:clamp(40px,10vw,76px);line-height:.95;margin:10px 0 18px}.muted{color:#aaa}
+button{border:0;border-radius:10px;padding:13px 17px;font-weight:700;background:#fff;color:#111;cursor:pointer}
+.panel,.card{background:#151519;border:1px solid #2b2b31;border-radius:16px}.panel{padding:18px;margin:30px 0}
+input{width:100%;padding:13px;margin:7px 0 12px;border-radius:10px;border:1px solid #3b3b42;background:#0d0d10;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+.card{overflow:hidden}.pic{height:250px;background:#25262b;display:flex;align-items:center;justify-content:center;color:#888}.pic img{width:100%;height:100%;object-fit:cover}
+.body{padding:16px}.price{font-size:20px;font-weight:800;margin:8px 0}.old{text-decoration:line-through;color:#777;font-size:14px;margin-left:6px}
+.order{display:block;text-align:center;background:#fff;color:#111;padding:11px;border-radius:9px;text-decoration:none;font-weight:700}
+.row{display:flex;gap:9px;flex-wrap:wrap}.status{margin-top:10px;font-size:14px;color:#aaa}
+footer{text-align:center;color:#777;padding:25px;border-top:1px solid #29292e;margin-top:35px}
+</style>
+</head>
+<body>
+<header><div class="logo">FASHIONHUB.MAX</div></header>
+<main>
+<section class="hero">
+<div class="muted">PREMIUM CLOTHING • ONLINE STORE</div>
+<h1>YOUR STYLE.<br>YOUR IDENTITY.</h1>
+<p class="muted">Premium fashion at prices you'll love.</p>
+</section>
+
+<section>
+<h2>Shop</h2>
+<p class="muted">Products added from the panel appear here.</p>
+<div id="products" class="grid"></div>
+</section>
+
+<section class="panel" id="admin">
+<h2>🔐 Admin Panel</h2>
+<p class="muted">Use this panel while the page is open in Chrome. This is a demo/local admin; it does not securely publish changes to other customers until the site is connected to a real database/hosting system.</p>
+
+<label>WhatsApp number</label>
+<input id="wa" type="tel" inputmode="numeric" placeholder="919876543210">
+<button type="button" id="saveWa">Save WhatsApp</button>
+<div id="waStatus" class="status"></div>
+
+<hr style="border-color:#29292e;margin:22px 0">
+
+<h3>Add Product</h3>
+<input id="name" type="text" placeholder="Product name">
+<input id="price" type="number" min="0" placeholder="Price (₹)">
+<input id="offer" type="number" min="0" placeholder="Offer price (optional)">
+<input id="photo" type="file" accept="image/*">
+<div class="row">
+<button type="button" id="add">Add Product</button>
+<button type="button" id="clear">Clear</button>
+</div>
+<div id="productStatus" class="status"></div>
+</section>
+</main>
+<footer>© 2026 FASHIONHUB.MAX</footer>
+
+<script>
+(function(){
+const products=[];
+let whatsapp="";
+
+const $=id=>document.getElementById(id);
+
+function cleanNumber(v){return (v||"").replace(/\D/g,"");}
+
+$("saveWa").addEventListener("click",function(){
+  const n=cleanNumber($("wa").value);
+  if(n.length<10){$("waStatus").textContent="❌ Number sahi format mein daalo, example: 919876543210";return;}
+  whatsapp=n;
+  $("wa").value=n;
+  $("waStatus").textContent="✅ WhatsApp number saved: "+n;
+  render();
+});
+
+$("add").addEventListener("click",function(){
+  const name=$("name").value.trim();
+  const price=Number($("price").value);
+  const offer=$("offer").value.trim()?Number($("offer").value):0;
+  const file=$("photo").files[0];
+
+  if(!name){$("productStatus").textContent="❌ Product name daalo.";return;}
+  if(!price || price<0){$("productStatus").textContent="❌ Price daalo.";return;}
+  if(file && !file.type.startsWith("image/")){$("productStatus").textContent="❌ Sirf image file select karo.";return;}
+
+  if(file){
+    const reader=new FileReader();
+    reader.onload=function(e){addProduct(name,price,offer,e.target.result);};
+    reader.onerror=function(){$("productStatus").textContent="❌ Photo read nahi ho paayi. Chrome mein page kholo aur dobara try karo.";};
+    reader.readAsDataURL(file);
+  }else{
+    addProduct(name,price,offer,"");
+  }
+});
+
+function addProduct(name,price,offer,image){
+  products.push({name,price,offer,image,id:Date.now()});
+  render();
+  $("name").value="";$("price").value="";$("offer").value="";$("photo").value="";
+  $("productStatus").textContent="✅ Product add ho gaya!";
+  document.querySelector("#products").scrollIntoView({behavior:"smooth"});
+}
+
+$("clear").addEventListener("click",function(){
+  $("name").value="";$("price").value="";$("offer").value="";$("photo").value="";
+  $("productStatus").textContent="";
+});
+
+function render(){
+ const box=$("products");
+ if(!products.length){box.innerHTML='<div class="muted">Abhi koi product nahi hai.</div>';return;}
+ box.innerHTML=products.map(p=>{
+   const shown=p.offer||p.price;
+   const old=p.offer?'<span class="old">₹'+p.price+'</span>':'';
+   const msg=encodeURIComponent("Hi FASHIONHUB.MAX, I want to order "+p.name+" for ₹"+shown+".");
+   const href=whatsapp?"https://wa.me/"+whatsapp+"?text="+msg:"#admin";
+   return '<article class="card"><div class="pic">'+(p.image?'<img src="'+p.image+'" alt="'+esc(p.name)+'">':'PRODUCT PHOTO')+'</div><div class="body"><h3>'+esc(p.name)+'</h3><div class="price">₹'+shown+old+'</div><a class="order" href="'+href+'" target="_blank">ORDER ON WHATSAPP</a></div></article>';
+ }).join("");
+}
+function esc(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
+render();
+})();
+</script>
+</body>
+</html>
